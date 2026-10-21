@@ -37,9 +37,13 @@ jobs:
           }
           '```' | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
           if ("${{ steps.build.outcome }}" -eq "failure" -and (Test-Path build-output.log)) {
-            $details = (Get-Content build-output.log -Tail 160) -join "`n"
-            $details = $details.Replace('%', '%25').Replace("`r", '%0D').Replace("`n", '%0A')
-            Write-Output "::error title=Windows build details::$details"
+            $lines = @(Get-Content build-output.log -Tail 160)
+            for ($i = 0; $i -lt $lines.Length; $i += 20) {
+              $last = [Math]::Min($i + 19, $lines.Length - 1)
+              $details = ($lines[$i..$last] -join "`n").Replace('%', '%25').Replace("`r", '%0D').Replace("`n", '%0A')
+              $part = [int]($i / 20) + 1
+              Write-Output "::error title=Windows build details part $part::$details"
+            }
           }
       - name: Keep Windows diagnostics
         if: always()
