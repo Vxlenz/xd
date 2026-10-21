@@ -18,8 +18,32 @@ jobs:
           python-version: '3.11'
           architecture: x64
       - name: Test, package and check the executable
-        shell: cmd
-        run: build.bat
+        shell: pwsh
+        env:
+          PYTEST_ADDOPTS: --timeout=45 --junitxml=build/test-results.xml
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $false
+          cmd /c build.bat 2>&1 | Tee-Object -FilePath build-output.log
+          exit $LASTEXITCODE
+      - name: Summarize Windows build diagnostics
+        if: always()
+        shell: pwsh
+        run: |
+          "## Windows build output" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+          '```text' | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+          if (Test-Path build-output.log) {
+            Get-Content build-output.log -Tail 240 | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+          }
+          '```' | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+      - name: Keep Windows diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NovaDeck-build-diagnostics
+          path: |
+            build-output.log
+            build/test-results.xml
+          if-no-files-found: ignore
       - name: Prepare downloadable ZIP files
         shell: pwsh
         run: |
