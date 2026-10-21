@@ -144,7 +144,7 @@ def test_language_switch_and_card_import_export_delete(window, tmp_path):
     from novadeck.core.models import Profile
     profile = Profile(name='A')
     source = tmp_path / 'import.json'
-    source.write_text(profile.model_dump_json())
+    source.write_text(profile.model_dump_json(), encoding='utf-8')
     with patch('novadeck.ui.main_window.filedialog.askopenfilename', return_value=str(source)), patch(
             'novadeck.ui.main_window.messagebox.askyesno', return_value=True):
         window.import_profile()
