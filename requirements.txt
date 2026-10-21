@@ -1,0 +1,13 @@
+pydantic>=2.10,<3
+customtkinter>=5.2,<6
+
+spotipy>=2.25,<3
+APScheduler>=3.11,<4
+tzdata>=2025.2
+pystray>=0.19,<1
+Pillow>=11,<13
+pycaw>=20260927,<20270000; sys_platform == 'win32'
+comtypes>=1.4,<2; sys_platform == 'win32'
+vosk>=0.3.45,<0.4
+sounddevice>=0.5,<0.6
+pynput>=1.8,<2; sys_platform == 'win32'

@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "profiles": [
+    {
+      "id": "03ed2e3c-9ecf-4f60-9cec-7ecf43fb4998",
+      "name": "Gaming",
+      "icon": "🎮",
+      "color": "#7C5CFF",
+      "actions": [
+        {
+          "id": "eb0efb14-44d5-44be-bb6c-a9d965ddc9de",
+          "delay_seconds": 0.0,
+          "type": "steam",
+          "app_id": "570",
+          "display_name": "Dota 2"
+        }
+      ],
+      "triggers": [
+        {
+          "type": "manual",
+          "time": null,
+          "weekdays": []
+        }
+      ]
+    },
+    {
+      "id": "92768cc0-ce2c-48bb-8aae-a8305b07ca8b",
+      "name": "Estudio",
+      "icon": "📚",
+      "color": "#22D3EE",
+      "actions": [
+        {
+          "id": "10265075-f23b-43a9-9809-8853558f9ef2",
+          "delay_seconds": 0.0,
+          "type": "launch",
+          "target": "https://www.wikipedia.org",
+          "arguments": []
+        }
+      ],
+      "triggers": [
+        {
+          "type": "manual",
+          "time": null,
+          "weekdays": []
+        }
+      ]
+    }
+  ]
+}

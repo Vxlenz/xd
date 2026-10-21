@@ -1,0 +1,73 @@
+name: Windows checks and build
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          architecture: x64
+      - name: Test, package and check the executable
+        shell: cmd
+        run: build.bat
+      - name: Prepare downloadable ZIP files
+        shell: pwsh
+        run: |
+          Compress-Archive -Path dist/NovaDeck -DestinationPath dist/NovaDeck-windows-x64.zip
+          git archive --format=zip --prefix=NovaDeck-source/ --output=dist/NovaDeck-source.zip HEAD
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $lines = Get-ChildItem dist/*.zip | Sort-Object Name | ForEach-Object {
+            $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+            "$hash  $($_.Name)"
+          }
+          [IO.File]::WriteAllLines("$PWD/dist/SHA256SUMS.txt", $lines, [Text.Encoding]::ASCII)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NovaDeck-downloads
+          path: |
+            dist/*.zip
+            dist/SHA256SUMS.txt
+          if-no-files-found: error
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: windows
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: NovaDeck-downloads
+          path: release-assets
+      - name: Publish downloads on GitHub Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          cat > release-notes.md <<'NOTES'
+          ## Descargar NovaDeck
+
+          - **NovaDeck-windows-x64.zip**: aplicación para Windows 10/11 de 64 bits. Extrae todo el ZIP y abre `NovaDeck/NovaDeck.exe`; no necesitas instalar Python.
+          - **NovaDeck-source.zip**: código fuente y pruebas para desarrollo.
+          - **SHA256SUMS.txt**: sumas de comprobación de los ZIP.
+
+          Conserva la carpeta `_internal` junto al ejecutable. Los modelos de voz se descargan al primer uso. Spotify requiere configurar tu Client ID en Ajustes y Premium para reproducir mediante la API.
+
+          La compilación ejecuta las pruebas y comprueba el ejecutable en Windows. El micrófono, los dispositivos de audio y la reproducción con una cuenta Spotify real necesitan comprobación en tu equipo.
+          NOTES
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" release-assets/* --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" release-assets/* --verify-tag --title "NovaDeck $GITHUB_REF_NAME" --notes-file release-notes.md
+          fi
