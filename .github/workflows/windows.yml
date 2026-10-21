@@ -18,6 +18,7 @@ jobs:
           python-version: '3.11'
           architecture: x64
       - name: Test, package and check the executable
+        id: build
         shell: pwsh
         env:
           PYTEST_ADDOPTS: --timeout=45 --junitxml=build/test-results.xml
@@ -35,6 +36,11 @@ jobs:
             Get-Content build-output.log -Tail 240 | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
           }
           '```' | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+          if ("${{ steps.build.outcome }}" -eq "failure" -and (Test-Path build-output.log)) {
+            $details = (Get-Content build-output.log -Tail 160) -join "`n"
+            $details = $details.Replace('%', '%25').Replace("`r", '%0D').Replace("`n", '%0A')
+            Write-Output "::error title=Windows build details::$details"
+          }
       - name: Keep Windows diagnostics
         if: always()
         uses: actions/upload-artifact@v4
